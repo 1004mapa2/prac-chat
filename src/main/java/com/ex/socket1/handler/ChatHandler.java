@@ -7,6 +7,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,15 +15,21 @@ import java.util.List;
 @Slf4j
 public class ChatHandler extends TextWebSocketHandler {
 
-    private static List<WebSocketSession> list = new ArrayList<>();
+    private static List<WebSocketSession> sessionList = new ArrayList<>();
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
+        // 유저 닉네임 받아오기
+        String name = "test11";
         log.info("payload: {}", payload);
-        for(WebSocketSession socketSession : list){
-            socketSession.sendMessage(message);
-        }
+        sessionList.forEach(s -> {
+            try {
+                s.sendMessage(message);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     /**
@@ -30,8 +37,16 @@ public class ChatHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        list.add(session);
-        log.info("session: {}", session + "클라이언트 접속");
+        String name = "test11";
+        sessionList.add(session);
+        sessionList.forEach(s -> {
+            try {
+                s.sendMessage(new TextMessage(name + "입장"));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+//        log.info("session: {}", session + "클라이언트 접속");
     }
 
     /**
@@ -39,7 +54,15 @@ public class ChatHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        log.info("session: {}", session + "클라이언트 접속 해제");
-        list.remove(session);
+        sessionList.remove(session);
+        String name = "test22";
+        sessionList.forEach(s -> {
+            try {
+                s.sendMessage(new TextMessage(name + "퇴장"));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+//        log.info("session: {}", session + "클라이언트 접속 해제");
     }
 }
